@@ -1,0 +1,22 @@
+{
+  "beta": 5.0,
+  "burn": 200,
+  "class_params": {
+    "mu_ink": 0.32629626128350725,
+    "mu_noink": 0.4088406100019817,
+    "sigma_ink": 0.15352718141198207,
+    "sigma_noink": 0.15676809529699431
+  },
+  "crop": {
+    "h": 300,
+    "left": 2200,
+    "top": 1600,
+    "w": 300
+  },
+  "ct_file": "ctlayer_32.tif",
+  "energy_log_every": 10,
+  "ink_file": "inklabels.png",
+  "samples": 500,
+  "seed": 42,
+  "tag": "oversmoothed"
+}

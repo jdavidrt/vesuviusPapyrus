@@ -8,7 +8,7 @@ Academic project for the course **Modelos Estocásticos**, Universidad Nacional 
 
 ## Full specification
 
-The authoritative implementation spec lives in `Implementation_Guide.md`. Read it before writing any code. This file is only the briefing.
+The authoritative implementation spec lives in `docs/Implementation_Guide.md`. Read it before writing any code. This file is only the briefing.
 
 ## Critical constraints (non-negotiable)
 
@@ -52,13 +52,14 @@ Outputs land in `results/scenario_<tag>/`.
 
 ## Sprint order
 
-Follow section 7 of `Implementation_Guide.md` in order. Do not skip ahead. Each sprint has its own acceptance criterion; satisfy it before moving on.
+Follow section 7 of `docs/Implementation_Guide.md` in order. Do not skip ahead. Each sprint has its own acceptance criterion; satisfy it before moving on.
 
 ## Project files
 
 | File | Role |
 |------|------|
-| `Implementation_Guide.md` | Full technical specification |
+| `docs/Implementation_Guide.md` | Full technical specification |
+| `docs/implementation_summary.md` | Post-implementation notes, warnings, run guide |
 | `Setup_Windows.md` | Environment setup reference |
 | `README.md` | Human-facing overview |
 | `requirements.txt` | Pinned dependency ranges |

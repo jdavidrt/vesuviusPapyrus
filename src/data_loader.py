@@ -35,8 +35,9 @@ def load_ink_mask(path: str) -> np.ndarray:
     arr = np.asarray(img)
     if arr.ndim == 3:
         arr = arr[..., 0]
-    # Anything above mid-grey is treated as ink.
-    return (arr > 127).astype(np.uint8)
+    # Source masks may be encoded as either {0, 1} (palette PNG) or {0, 255}
+    # (8-bit grayscale). Any strictly positive pixel counts as ink.
+    return (arr > 0).astype(np.uint8)
 
 
 def crop_region(arr: np.ndarray, top: int, left: int, h: int, w: int) -> np.ndarray:

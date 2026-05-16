@@ -89,7 +89,9 @@ voxelscribe/
 +-- run_scenario.py          # CLI principal
 +-- requirements.txt
 +-- Setup_Windows.md
-+-- Implementation_Guide.md
++-- docs/
+|   +-- Implementation_Guide.md
+|   +-- implementation_summary.md
 +-- CLAUDE.md
 +-- README.md
 ```
@@ -99,7 +101,8 @@ voxelscribe/
 | Documento | Propósito |
 |-----------|-----------|
 | `Setup_Windows.md` | Guía paso a paso de instalación |
-| `Implementation_Guide.md` | Especificación técnica completa |
+| `docs/Implementation_Guide.md` | Especificación técnica completa |
+| `docs/implementation_summary.md` | Notas posteriores a la implementación, hallazgos, guía de ejecución |
 | `CLAUDE.md` | Contexto para asistentes de IA |
 
 ## Referencias
