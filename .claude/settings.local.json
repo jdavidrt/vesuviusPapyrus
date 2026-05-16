@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(working-style)",
+      "Skill(working-style:*)"
+    ]
+  }
+}
