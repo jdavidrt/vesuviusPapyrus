@@ -1,0 +1,619 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>VoxelScribe — Diagrama del Pipeline</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #161a22;
+    --panel-2: #1c2230;
+    --ink: #e6e8ee;
+    --muted: #8b93a7;
+    --rule: #2a3142;
+    --c-input:   #888899;
+    --c-load:    #5aa9ff;
+    --c-learn:   #56c596;
+    --c-sample:  #ff8a5b;
+    --c-metrics: #c08cff;
+    --c-output:  #f0c674;
+    --chip-bg: #232a3a;
+    --code-bg: #0b0d12;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+      Helvetica, Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.45;
+  }
+  .wrap {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 28px 20px 60px;
+  }
+  header h1 {
+    margin: 0 0 4px;
+    font-size: 26px;
+    letter-spacing: -0.01em;
+  }
+  header p.sub {
+    margin: 0 0 18px;
+    color: var(--muted);
+    font-size: 14.5px;
+  }
+
+  /* Legend */
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 14px;
+    padding: 12px 14px;
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    margin-bottom: 22px;
+    align-items: center;
+  }
+  .legend .group {
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+  }
+  .legend .group + .group { border-left: 1px solid var(--rule); padding-left: 14px; }
+  .legend .label {
+    color: var(--muted); font-size: 12.5px;
+    text-transform: uppercase; letter-spacing: 0.07em;
+    margin-right: 4px;
+  }
+  .chip {
+    display: inline-flex; align-items: center;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--chip-bg);
+    color: #f0c674;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 12px;
+    border: 1px solid #2e3650;
+  }
+  .chip.std  { color: #9ad4ff; }
+  .chip.file { color: #b6e5b6; }
+  .swatch {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12.5px; color: var(--muted);
+  }
+  .swatch::before {
+    content: ""; display: inline-block;
+    width: 14px; height: 14px; border-radius: 4px; border: 1.5px solid;
+  }
+  .sw-input::before   { background: var(--c-input);   border-color: var(--c-input);   }
+  .sw-load::before    { background: var(--c-load);    border-color: var(--c-load);    }
+  .sw-learn::before   { background: var(--c-learn);   border-color: var(--c-learn);   }
+  .sw-sample::before  { background: var(--c-sample);  border-color: var(--c-sample);  }
+  .sw-metrics::before { background: var(--c-metrics); border-color: var(--c-metrics); }
+  .sw-output::before  { background: var(--c-output);  border-color: var(--c-output);  }
+
+  /* Diagram */
+  .diagram-wrap {
+    background: #0b0e14;
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    padding: 10px;
+    overflow-x: auto;
+  }
+  svg.diagram {
+    width: 100%;
+    height: auto;
+    display: block;
+    min-width: 760px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+      Helvetica, Arial, sans-serif;
+  }
+
+  /* HTML inside foreignObject */
+  .box {
+    width: 100%; height: 100%;
+    padding: 10px 14px;
+    color: var(--ink);
+    font-size: 13.5px;
+  }
+  .box .title {
+    display: flex; align-items: center; gap: 8px;
+    margin: 0 0 6px;
+    font-size: 14.5px;
+    font-weight: 600;
+  }
+  .box .num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--panel-2);
+    color: var(--ink);
+    font-size: 12px;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    border: 1.5px solid var(--rule);
+  }
+  .box .sub {
+    color: var(--muted); font-size: 12.5px;
+    margin: 0 0 6px;
+  }
+  .box ul {
+    margin: 4px 0 0; padding-left: 16px;
+  }
+  .box ul li {
+    margin: 1.5px 0;
+    font-size: 13px;
+  }
+  .box code {
+    background: var(--code-bg);
+    border: 1px solid var(--rule);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 12.5px;
+    color: #d3dcef;
+  }
+  .box .libs {
+    display: flex; flex-wrap: wrap; gap: 5px;
+    margin-top: 8px;
+  }
+  .box .libs .chip { font-size: 11.5px; padding: 2px 7px; }
+
+  .twocol {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 6px;
+  }
+  .threecol {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin-top: 6px;
+  }
+  .inner {
+    background: rgba(255,255,255,0.03);
+    border: 1px dashed rgba(255,255,255,0.18);
+    border-radius: 6px;
+    padding: 6px 8px;
+  }
+  .inner h4 {
+    margin: 0 0 4px;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .inner.loop {
+    border-style: dashed;
+    border-color: #ff8a5b66;
+    background: rgba(255,138,91,0.08);
+  }
+  .inner.formula {
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 12.5px;
+    color: #e9d8b6;
+    background: var(--code-bg);
+    border: 1px solid var(--rule);
+    white-space: pre-wrap;
+    line-height: 1.45;
+  }
+  .file-tag {
+    display: inline-block;
+    background: var(--panel-2);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 12px;
+    color: #b6e5b6;
+    margin-right: 4px;
+  }
+  .shape-note {
+    display: inline-block;
+    color: var(--muted);
+    font-size: 11.5px;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    margin-left: 4px;
+  }
+
+  .footer {
+    margin-top: 22px;
+    color: var(--muted);
+    font-size: 12.5px;
+    border-top: 1px solid var(--rule);
+    padding-top: 12px;
+  }
+  .kbd {
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    background: var(--code-bg);
+    border: 1px solid var(--rule);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 12.5px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>VoxelScribe &mdash; Diagrama del Pipeline</h1>
+    <p class="sub">
+      Vista general de cómo una capa CT y su máscara de tinta recorren el
+      sistema: qué se lee, qué se calcula y qué biblioteca hace cada paso.
+    </p>
+  </header>
+
+  <section class="legend" aria-label="Leyenda">
+    <div class="group">
+      <span class="label">Etapas</span>
+      <span class="swatch sw-input">Entrada</span>
+      <span class="swatch sw-load">Carga</span>
+      <span class="swatch sw-learn">Aprendizaje</span>
+      <span class="swatch sw-sample">Muestreo</span>
+      <span class="swatch sw-metrics">Evaluación</span>
+      <span class="swatch sw-output">Salida</span>
+    </div>
+    <div class="group">
+      <span class="label">Bibliotecas</span>
+      <span class="chip">NumPy</span>
+      <span class="chip">Pillow</span>
+      <span class="chip">Matplotlib</span>
+      <span class="chip std">argparse</span>
+      <span class="chip std">csv</span>
+      <span class="chip std">json</span>
+    </div>
+  </section>
+
+  <div class="diagram-wrap">
+  <svg class="diagram" viewBox="0 0 1100 1500"
+       xmlns="http://www.w3.org/2000/svg"
+       xmlns:xhtml="http://www.w3.org/1999/xhtml"
+       role="img" aria-label="Diagrama de flujo del pipeline">
+    <defs>
+      <marker id="arrow"
+              viewBox="0 0 10 10" refX="9" refY="5"
+              markerWidth="9" markerHeight="9"
+              orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 Z" fill="#8b93a7"/>
+      </marker>
+      <marker id="arrow-loop"
+              viewBox="0 0 10 10" refX="9" refY="5"
+              markerWidth="9" markerHeight="9"
+              orient="auto-start-reverse">
+        <path d="M 0 0 L 10 5 L 0 10 Z" fill="#ff8a5b"/>
+      </marker>
+      <style>
+        .stage-rect { fill: #161a22; stroke-width: 2; }
+        .stage-input   { stroke: #888899; }
+        .stage-load    { stroke: #5aa9ff; }
+        .stage-learn   { stroke: #56c596; }
+        .stage-sample  { stroke: #ff8a5b; }
+        .stage-metrics { stroke: #c08cff; }
+        .stage-output  { stroke: #f0c674; }
+        .header-bar { stroke-width: 0; }
+        .hb-input   { fill: #888899; }
+        .hb-load    { fill: #5aa9ff; }
+        .hb-learn   { fill: #56c596; }
+        .hb-sample  { fill: #ff8a5b; }
+        .hb-metrics { fill: #c08cff; }
+        .hb-output  { fill: #f0c674; }
+        .connector { fill: none; stroke: #8b93a7; stroke-width: 2; }
+        .connector-loop { fill: none; stroke: #ff8a5b; stroke-width: 2;
+          stroke-dasharray: 5 3; }
+        .conn-label {
+          fill: #8b93a7; font-size: 12px;
+          font-family: ui-monospace, Menlo, Consolas, monospace;
+        }
+        .stage-num-bg { fill: #0f1115; stroke-width: 2; }
+      </style>
+    </defs>
+
+    <!-- ============================================================= -->
+    <!-- ETAPA 1: ENTRADA (dos archivos)                                -->
+    <!-- ============================================================= -->
+    <g>
+      <rect x="160" y="70"  width="340" height="120" rx="10"
+            class="stage-rect stage-input"/>
+      <rect x="160" y="70"  width="340" height="6"   rx="3"
+            class="header-bar hb-input"/>
+      <foreignObject x="160" y="76" width="340" height="114">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="box">
+          <p class="title"><span class="num">1a</span>Capa CT</p>
+          <p class="sub"><span class="file-tag">data/raw/ctlayer_32.tif</span></p>
+          <ul>
+            <li>TIF de 16 bits, una sola capa.</li>
+            <li><code>(8181, 6330)</code> uint16.</li>
+          </ul>
+        </div>
+      </foreignObject>
+
+      <rect x="600" y="70" width="340" height="120" rx="10"
+            class="stage-rect stage-input"/>
+      <rect x="600" y="70" width="340" height="6"  rx="3"
+            class="header-bar hb-input"/>
+      <foreignObject x="600" y="76" width="340" height="114">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="box">
+          <p class="title"><span class="num">1b</span>Etiquetas de tinta</p>
+          <p class="sub"><span class="file-tag">data/raw/inklabels.png</span></p>
+          <ul>
+            <li>PNG con paleta, valores <code>{0, 1}</code>.</li>
+            <li>Misma forma que la capa CT.</li>
+          </ul>
+        </div>
+      </foreignObject>
+    </g>
+
+    <!-- Conectores de entrada que convergen en la etapa 2 -->
+    <path class="connector"
+          d="M 330 190 C 330 220 430 230 430 260"
+          marker-end="url(#arrow)"/>
+    <path class="connector"
+          d="M 770 190 C 770 220 670 230 670 260"
+          marker-end="url(#arrow)"/>
+    <text class="conn-label" x="345" y="218">Pillow</text>
+    <text class="conn-label" x="700" y="218">Pillow</text>
+
+    <!-- ============================================================= -->
+    <!-- ETAPA 2: CARGA                                                 -->
+    <!-- ============================================================= -->
+    <g>
+      <rect x="160" y="260" width="780" height="160" rx="10"
+            class="stage-rect stage-load"/>
+      <rect x="160" y="260" width="780" height="6"   rx="3"
+            class="header-bar hb-load"/>
+      <foreignObject x="160" y="266" width="780" height="154">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="box">
+          <p class="title">
+            <span class="num">2</span>Carga, recorte y división espacial
+            <span class="shape-note">&mdash; src/data_loader.py</span>
+          </p>
+          <div class="twocol">
+            <div>
+              <ul>
+                <li><code>load_ct_image</code>: uint16 &rarr; float64 &isin; [0, 1]</li>
+                <li><code>load_ink_mask</code>: PNG paleta &rarr; uint8 &isin; {0, 1}</li>
+                <li><code>crop_region</code>: <code>(8181, 6330)</code> &rarr; <code>(300, 300)</code></li>
+                <li><code>spatial_split</code>: filas superiores = entrenamiento, inferiores = prueba</li>
+              </ul>
+            </div>
+            <div>
+              <p class="sub" style="margin-top:0">Salida</p>
+              <ul>
+                <li><code>ct</code> &mdash; <code>(300, 300)</code> float64</li>
+                <li><code>ink</code> &mdash; <code>(300, 300)</code> uint8</li>
+                <li>Índices <code>train_rows</code> / <code>test_rows</code></li>
+              </ul>
+              <div class="libs">
+                <span class="chip">Pillow</span>
+                <span class="chip">NumPy</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </foreignObject>
+    </g>
+
+    <!-- Conector 2 → 3 -->
+    <path class="connector"
+          d="M 550 420 L 550 460"
+          marker-end="url(#arrow)"/>
+    <text class="conn-label" x="562" y="445">ROI (300, 300) + máscara</text>
+
+    <!-- ============================================================= -->
+    <!-- ETAPA 3: APRENDIZAJE                                           -->
+    <!-- ============================================================= -->
+    <g>
+      <rect x="160" y="460" width="780" height="180" rx="10"
+            class="stage-rect stage-learn"/>
+      <rect x="160" y="460" width="780" height="6"   rx="3"
+            class="header-bar hb-learn"/>
+      <foreignObject x="160" y="466" width="780" height="174">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="box">
+          <p class="title">
+            <span class="num">3</span>Aprendizaje de parámetros gaussianos por clase
+            <span class="shape-note">&mdash; src/learning.py + src/distributions.py</span>
+          </p>
+          <div class="twocol">
+            <div class="inner">
+              <h4>estimate_class_params</h4>
+              <ul>
+                <li>Sobre las filas de <strong>entrenamiento</strong> únicamente.</li>
+                <li>Media muestral y desviación estándar (corrección de Bessel, denominador <code>n &minus; 1</code>).</li>
+                <li>Salida: <code>&mu;<sub>ink</sub></code>, <code>&sigma;<sub>ink</sub></code>, <code>&mu;<sub>noink</sub></code>, <code>&sigma;<sub>noink</sub></code>.</li>
+              </ul>
+            </div>
+            <div class="inner">
+              <h4>precompute_log_unaries</h4>
+              <ul>
+                <li>Log-PDF gaussiana estable, escrita a mano.</li>
+                <li>Evaluada sobre el <strong>ROI completo</strong>.</li>
+                <li>Salida: dos tablas <code>(300, 300)</code> float64.</li>
+              </ul>
+              <div class="libs">
+                <span class="chip">NumPy</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </foreignObject>
+    </g>
+
+    <!-- Conector 3 → 4 -->
+    <path class="connector"
+          d="M 550 640 L 550 680"
+          marker-end="url(#arrow)"/>
+    <text class="conn-label" x="562" y="665">log_unary_ink, log_unary_noink</text>
+
+    <!-- ============================================================= -->
+    <!-- ETAPA 4: MUESTREO GIBBS (caja grande)                          -->
+    <!-- ============================================================= -->
+    <g>
+      <rect x="100" y="680" width="900" height="380" rx="12"
+            class="stage-rect stage-sample"/>
+      <rect x="100" y="680" width="900" height="6"   rx="3"
+            class="header-bar hb-sample"/>
+      <foreignObject x="100" y="686" width="900" height="374">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="box">
+          <p class="title">
+            <span class="num">4</span>Muestreo de Gibbs sobre el MRF
+            <span class="shape-note">&mdash; src/gibbs.py + src/energy.py</span>
+          </p>
+          <p class="sub">
+            Inicialización: <code>state = zeros((300, 300))</code>,
+            <code>rng = np.random.default_rng(seed)</code>. Cada barrido actualiza
+            todos los píxeles en un esquema de <strong>tablero de ajedrez</strong>
+            (los píxeles con <code>(i + j)</code> par son condicionalmente
+            independientes entre sí dado el resto).
+          </p>
+
+          <div class="threecol">
+            <div class="inner loop">
+              <h4>Burn-in &mdash; 200 barridos</h4>
+              <ul>
+                <li>Se descartan las muestras.</li>
+                <li>Solo se acepta movimiento de la cadena hacia su distribución estacionaria.</li>
+                <li>Registro de energía cada 10 barridos.</li>
+              </ul>
+            </div>
+            <div class="inner loop">
+              <h4>Muestreo &mdash; 500 barridos</h4>
+              <ul>
+                <li><code>posterior_sum += state</code> en cada barrido.</li>
+                <li>Registro de energía cada 10 barridos (diagnóstico).</li>
+                <li>Al final: <code>posterior = posterior_sum / 500</code>.</li>
+              </ul>
+            </div>
+            <div class="inner">
+              <h4>Salida del muestreador</h4>
+              <ul>
+                <li><code>posterior</code> &mdash; <code>(300, 300)</code> float64</li>
+                <li><code>final_mask = posterior &gt; 0.5</code></li>
+                <li><code>energy_history</code> &mdash; lista de <code>(fase, barrido, energía)</code></li>
+              </ul>
+              <div class="libs">
+                <span class="chip">NumPy</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="inner formula" style="margin-top:8px">delta   = log_unary_ink &minus; log_unary_noink + beta &middot; (2 &middot; n_ink &minus; n_total)
+P(s=1) = sigmoide(delta)                # sigmoide numéricamente estable
+s_new  ~ Bernoulli(P(s=1))              # en paralelo sobre cada color del tablero</div>
+        </div>
+      </foreignObject>
+    </g>
+
+    <!-- Conector 4 → 5 -->
+    <path class="connector"
+          d="M 550 1060 L 550 1100"
+          marker-end="url(#arrow)"/>
+    <text class="conn-label" x="562" y="1085">final_mask + posterior</text>
+
+    <!-- ============================================================= -->
+    <!-- ETAPA 5: EVALUACIÓN                                            -->
+    <!-- ============================================================= -->
+    <g>
+      <rect x="220" y="1100" width="660" height="130" rx="10"
+            class="stage-rect stage-metrics"/>
+      <rect x="220" y="1100" width="660" height="6"   rx="3"
+            class="header-bar hb-metrics"/>
+      <foreignObject x="220" y="1106" width="660" height="124">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="box">
+          <p class="title">
+            <span class="num">5</span>Métricas binarias contra la verdad de referencia
+            <span class="shape-note">&mdash; src/metrics.py</span>
+          </p>
+          <div class="twocol">
+            <div>
+              <ul>
+                <li><code>confusion_matrix</code> &rarr; <code>(TP, FP, FN, TN)</code></li>
+                <li><code>compute_metrics</code> &rarr; <code>accuracy</code>, <code>precision</code>, <code>recall</code>, <code>F1</code></li>
+              </ul>
+            </div>
+            <div>
+              <p class="sub" style="margin-top:0">Evaluado sobre tres vistas</p>
+              <ul>
+                <li><code>full_roi</code> (300&times;300)</li>
+                <li><code>train</code> (150 filas superiores)</li>
+                <li><code>test</code> (150 filas inferiores)</li>
+              </ul>
+              <div class="libs">
+                <span class="chip">NumPy</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </foreignObject>
+    </g>
+
+    <!-- Conector 5 → 6 (rama) -->
+    <path class="connector"
+          d="M 550 1230 C 550 1245 300 1255 300 1275"
+          marker-end="url(#arrow)"/>
+    <path class="connector"
+          d="M 550 1230 C 550 1245 800 1255 800 1275"
+          marker-end="url(#arrow)"/>
+
+    <!-- ============================================================= -->
+    <!-- ETAPA 6: SALIDA (dos cajas)                                    -->
+    <!-- ============================================================= -->
+    <g>
+      <rect x="60" y="1275" width="480" height="200" rx="10"
+            class="stage-rect stage-output"/>
+      <rect x="60" y="1275" width="480" height="6"   rx="3"
+            class="header-bar hb-output"/>
+      <foreignObject x="60" y="1281" width="480" height="194">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="box">
+          <p class="title">
+            <span class="num">6a</span>Por escenario
+            <span class="shape-note">&mdash; results/scenario_&lt;tag&gt;/</span>
+          </p>
+          <ul>
+            <li><code>final_mask.png</code> &mdash; máscara binaria <span class="chip">Pillow</span></li>
+            <li><code>posterior.png</code> &mdash; mapa de probabilidad <span class="chip">Pillow</span></li>
+            <li><code>energy.png</code> &mdash; traza de energía <span class="chip">Matplotlib</span></li>
+            <li><code>energy.csv</code> &mdash; 3 columnas <span class="chip std">csv</span></li>
+            <li><code>metrics.json</code>, <code>params.json</code> <span class="chip std">json</span></li>
+          </ul>
+        </div>
+      </foreignObject>
+
+      <rect x="560" y="1275" width="480" height="200" rx="10"
+            class="stage-rect stage-output"/>
+      <rect x="560" y="1275" width="480" height="6"   rx="3"
+            class="header-bar hb-output"/>
+      <foreignObject x="560" y="1281" width="480" height="194">
+        <div xmlns="http://www.w3.org/1999/xhtml" class="box">
+          <p class="title">
+            <span class="num">6b</span>Comparación entre escenarios
+            <span class="shape-note">&mdash; results/</span>
+          </p>
+          <ul>
+            <li><code>comparison.png</code> &mdash; CT, etiquetas, predicción por &beta; <span class="chip">Matplotlib</span></li>
+            <li><code>comparison.md</code> &mdash; tabla de métricas sobre el conjunto de prueba</li>
+            <li>Se regenera al final de cada ejecución a partir de las carpetas <code>scenario_*</code> existentes.</li>
+          </ul>
+        </div>
+      </foreignObject>
+    </g>
+
+  </svg>
+  </div>
+
+  <section class="footer">
+    <p>
+      Punto de entrada: <span class="kbd">python run_scenario.py --beta &lt;valor&gt; --tag &lt;nombre&gt;</span>.
+      Tres escenarios de referencia: <code>--beta 0.0 --tag base</code> (sin acoplamiento espacial),
+      <code>--beta 1.5 --tag normal</code> (acoplamiento de Potts moderado),
+      <code>--beta 5.0 --tag oversmoothed</code> (colapso modal).
+      Especificación en <code>docs/Implementation_Guide.md</code>; resumen post-implementación en
+      <code>docs/implementation_summary.md</code>.
+    </p>
+  </section>
+
+</div>
+</body>
+</html>
