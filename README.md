@@ -168,14 +168,6 @@ A nivel de `results/`:
 - Vesuvius Challenge — sitio oficial del concurso.
 - EduceLab-Scrolls dataset.
 
-## Autores
-
-- John Alejandro Pastor Sandoval — jpastor@unal.edu.co
-- Juan David Ramírez Torres — jdramirez@unal.edu.co
-- Gabriel Felipe González Bohorquez — ggonzalezbo@unal.edu.co
-- Diego Felipe Cabrejo Suarez — dcabrejo@unal.edu.co
-- Mateo Andrés Vivas Acosta — mavivasa@unal.edu.co
-
 **Profesor:** Jorge Eduardo Ortiz Triviño — jeortizt@unal.edu.co
 
 Universidad Nacional de Colombia — Modelos Estocásticos.
