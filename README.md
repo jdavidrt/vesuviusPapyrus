@@ -160,6 +160,15 @@ A nivel de `results/`:
 ├── requirements.txt
 └── README.md
 ```
+## Autores
+
+**Implementación:** Juan David Ramírez Torres — jdramirezt@unal.edu.co
+
+**Análisis, informe y validación:**
+- John Alejandro Pastor Sandoval
+- Gabriel Felipe González Bohorquez
+- Diego Felipe Cabrejo Suarez
+- Mateo Andrés Vivas Acosta
 
 ## Referencias
 
